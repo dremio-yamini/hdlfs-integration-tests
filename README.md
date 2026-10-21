@@ -33,6 +33,4 @@ python3 hdlfs_client.py
 ```
 
 ## Security
-
-Private keys (`*.key`) are excluded from this repository via `.gitignore`.
 Generate your own key/CSR with `hdlfs_cert_setup.sh` — the private key never leaves your machine.
