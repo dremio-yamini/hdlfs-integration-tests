@@ -58,17 +58,7 @@ HDLFS  https://<uuid>.files.hdl.<region>.hanacloud.ondemand.com
 
 ## Why SGW Temporary Credentials Don't Work
 
-HDLFS can vend temporary S3/GCS credentials, which would allow Dremio to connect via the standard S3 path instead of WebHDFS:
-
-```
-POST /webhdfs/v1/?op=GENERATETEMPORARYCREDENTIALS
-```
-
-**This is currently blocked.** The operation requires `CFC_DIRECT_ACCESS_ENABLED=true` — a cluster-level flag on the SAP HANA Cloud landscape. It is **not** a per-instance setting and cannot be toggled in HANA Cloud Central.
-
-On `prod-eu12` this flag is not enabled. The `/catalog/v2` and `/policies/v2` endpoints also return errors for the same reason.
-
-To unblock: contact the SAP HANA Cloud ops team and request `CFC_DIRECT_ACCESS_ENABLED` be enabled on a landscape. Until then, the only supported path is **direct WebHDFS via mTLS** using these scripts.
+`GENERATETEMPORARYCREDENTIALS` (which would allow Dremio to connect via S3 instead of WebHDFS) requires `CFC_DIRECT_ACCESS_ENABLED=true` — a **cluster-level flag** set by the SAP HANA Cloud ops team, not configurable per instance. This is not enabled on `prod-eu12`. Contact the SAP HANA Cloud ops team to enable it on a landscape.
 
 ## Security
 
