@@ -3,7 +3,7 @@ hdlfs_client.py — HDLFS WebHDFS Python client
 pip install requests
 """
 from __future__ import annotations
-import os, sys
+import os, sys, warnings
 from pathlib import Path
 from typing import Generator, Optional, Tuple, Union
 
@@ -35,6 +35,13 @@ class HdlfsClient:
         else:
             raw = os.environ.get("HDLFS_CACERT", "")
             self._verify = False if raw.lower() in ("false", "skip") else (raw or True)
+        if self._verify is False:
+            warnings.warn(
+                "TLS server verification is disabled (HDLFS_CACERT=skip/false). "
+                "The server identity is NOT verified — connection is vulnerable to "
+                "man-in-the-middle attacks. Do not use in production.",
+                stacklevel=2,
+            )
         self._session = self._build_session()
 
     def _build_session(self):
@@ -130,7 +137,10 @@ class HdlfsClient:
         print(f"Container : {self.container}")
         print(f"Cert      : {self._cert[0]}  ({'OK' if Path(self._cert[0]).is_file() else 'MISSING'})")
         print(f"Key       : {self._cert[1]}  ({'OK' if Path(self._cert[1]).is_file() else 'MISSING'})")
-        print(f"CA verify : {self._verify}")
+        if self._verify is False:
+            print("CA verify : DISABLED — server identity NOT verified (do not use in production)")
+        else:
+            print(f"CA verify : {self._verify}")
         try:
             entries = self.ls("/")
             print(f"ls /      : OK — {len(entries)} entries")

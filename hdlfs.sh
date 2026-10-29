@@ -9,11 +9,16 @@ set -euo pipefail
 # HDLFS_CONTAINER  <uuid>
 # HDLFS_CERT       path to client.crt
 # HDLFS_KEY        path to client.key
-# HDLFS_CACERT     path to ca.crt, or "skip" for --insecure (dev only)
+# HDLFS_CACERT     path to ca.crt, or "skip" to disable TLS server verification
+#                  WARNING: "skip" passes --insecure to curl — the server identity is NOT
+#                  verified and the connection is vulnerable to man-in-the-middle attacks.
+#                  Use only in isolated test environments. Never use against production
+#                  or shared HDLFS instances.
 
 _hdlfs_curl() {
     local cacert_args=()
     if [[ "${HDLFS_CACERT:-}" == "skip" ]]; then
+        echo "WARNING: TLS server verification is disabled (HDLFS_CACERT=skip). Do not use in production." >&2
         cacert_args=("--insecure")
     elif [[ -n "${HDLFS_CACERT:-}" ]]; then
         cacert_args=("--cacert" "${HDLFS_CACERT}")
@@ -38,7 +43,11 @@ hdlfs_check() {
     echo "Container : ${HDLFS_CONTAINER:-<not set>}"
     echo "Cert      : ${HDLFS_CERT:-<not set>}"
     echo "Key       : ${HDLFS_KEY:-<not set>}"
-    echo "CA cert   : ${HDLFS_CACERT:-<not set>}"
+    if [[ "${HDLFS_CACERT:-}" == "skip" ]]; then
+        echo "CA cert   : DISABLED (--insecure) — server identity NOT verified"
+    else
+        echo "CA cert   : ${HDLFS_CACERT:-<not set>}"
+    fi
     echo ""
     echo -n "Live LISTSTATUS / ... "
     _hdlfs_curl "$(_hdlfs_url /)?op=LISTSTATUS" | python3 -c "
@@ -77,6 +86,7 @@ hdlfs_exists() {
     local code
     local cacert_args=()
     if [[ "${HDLFS_CACERT:-}" == "skip" ]]; then
+        echo "WARNING: TLS server verification is disabled (HDLFS_CACERT=skip). Do not use in production." >&2
         cacert_args=("--insecure")
     elif [[ -n "${HDLFS_CACERT:-}" ]]; then
         cacert_args=("--cacert" "${HDLFS_CACERT}")
